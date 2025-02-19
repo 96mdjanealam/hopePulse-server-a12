@@ -158,6 +158,7 @@ async function run() {
       const allDonationRequests = await requestsCollection.find().toArray();
       res.send(allDonationRequests);
     });
+
     app.get("/allFunding", verifyToken, async (req, res) => {
       const allFunding = await paymentCollection.find().toArray();
       res.send(allFunding);
@@ -169,6 +170,21 @@ async function run() {
       const result = await requestsCollection.findOne(query);
       res.send(result);
     });
+
+    app.get("/allFunding10", verifyToken, async (req, res) => {
+      try {
+          const allFunding = await paymentCollection
+              .find()
+              .sort({ _id: -1 })
+              .limit(10)
+              .toArray();
+          
+          res.send(allFunding);
+      } catch (error) {
+          console.error("Error fetching funding data:", error);
+          res.status(500).send("Internal Server Error");
+      }
+  });
 
     app.delete(
       "/requestDelete/:id",
