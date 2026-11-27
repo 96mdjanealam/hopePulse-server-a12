@@ -1,14 +1,15 @@
 const { getCollections } = require("../config/db");
 const stripe = require("../config/stripe");
+const { paginateCollection } = require("../utils/pagination");
 
 /**
  * GET /allFunding
- * Retrieves all funding/payment records.
+ * Retrieves all funding/payment records (supports optional ?page & ?limit).
  */
 async function getAllFunding(req, res) {
   const { paymentCollection } = getCollections();
-  const allFunding = await paymentCollection.find().toArray();
-  res.send(allFunding);
+  const result = await paginateCollection(paymentCollection, {}, req.query);
+  res.send(result);
 }
 
 /**

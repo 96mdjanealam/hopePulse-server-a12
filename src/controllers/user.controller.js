@@ -1,5 +1,6 @@
 const { getCollections } = require("../config/db");
 const { parseObjectId } = require("../utils/objectId");
+const { paginateCollection } = require("../utils/pagination");
 
 /**
  * POST /users
@@ -47,12 +48,12 @@ async function checkUserAdmin(req, res) {
 
 /**
  * GET /allUsers
- * Retrieves all users.
+ * Retrieves all users (supports optional ?page & ?limit pagination).
  */
 async function getAllUsers(req, res) {
   const { usersCollection } = getCollections();
-  const allUsers = await usersCollection.find().toArray();
-  res.send(allUsers);
+  const result = await paginateCollection(usersCollection, {}, req.query);
+  res.send(result);
 }
 
 /**

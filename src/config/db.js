@@ -2,8 +2,10 @@ const dns = require("dns");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const env = require("./env");
 
-// Fallback to public DNS servers so mongodb+srv:// SRV lookups succeed on networks whose local DNS refuses SRV queries
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
+// Local Windows networks sometimes refuse SRV queries; Vercel uses native DNS.
+if (!process.env.VERCEL) {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+}
 
 const uri = `mongodb+srv://${env.dbUser}:${env.dbPass}@cluster0.mqmjq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -17,18 +19,25 @@ const client = new MongoClient(uri, {
 
 const DB_NAME = "hopePulse";
 
-let isConnected = false;
+let connectPromise = null;
 
 /**
- * Connects to MongoDB if not already connected.
+ * Connects to MongoDB (reusing the in-flight/active connection across serverless invocations).
  * @returns {Promise<import("mongodb").Db>}
  */
 async function connectDB() {
-  if (!isConnected) {
-    await client.connect();
-    isConnected = true;
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  if (!connectPromise) {
+    connectPromise = client
+      .connect()
+      .then(() => {
+        console.log("Connected to MongoDB!");
+      })
+      .catch((err) => {
+        connectPromise = null;
+        throw err;
+      });
   }
+  await connectPromise;
   return client.db(DB_NAME);
 }
 

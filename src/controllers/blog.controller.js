@@ -1,5 +1,6 @@
 const { getCollections } = require("../config/db");
 const { parseObjectId } = require("../utils/objectId");
+const { paginateCollection } = require("../utils/pagination");
 
 /**
  * POST /createBlog
@@ -13,24 +14,26 @@ async function createBlog(req, res) {
 
 /**
  * GET /allBlogs
- * Retrieves all blogs regardless of status.
+ * Retrieves all blogs regardless of status (supports optional ?page & ?limit).
  */
 async function getAllBlogs(req, res) {
   const { blogCollection } = getCollections();
-  const allBlogs = await blogCollection.find().toArray();
-  res.send(allBlogs);
+  const result = await paginateCollection(blogCollection, {}, req.query);
+  res.send(result);
 }
 
 /**
  * GET /publishedBlogs
- * Retrieves all published blogs.
+ * Retrieves all published blogs (supports optional ?page & ?limit).
  */
 async function getPublishedBlogs(req, res) {
   const { blogCollection } = getCollections();
-  const publishedBlogs = await blogCollection
-    .find({ status: "published" })
-    .toArray();
-  res.send(publishedBlogs);
+  const result = await paginateCollection(
+    blogCollection,
+    { status: "published" },
+    req.query
+  );
+  res.send(result);
 }
 
 /**

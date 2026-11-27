@@ -1,5 +1,6 @@
 const { getCollections } = require("../config/db");
 const { parseObjectId } = require("../utils/objectId");
+const { paginateCollection } = require("../utils/pagination");
 
 /**
  * POST /createDonationRequest
@@ -13,14 +14,16 @@ async function createDonationRequest(req, res) {
 
 /**
  * GET /pending-donation-requests
- * Retrieves all donation requests with status "pending".
+ * Retrieves all donation requests with status "pending" (supports optional ?page & ?limit).
  */
 async function getPendingDonationRequests(req, res) {
   const { requestsCollection } = getCollections();
-  const requests = await requestsCollection
-    .find({ donationStatus: "pending" })
-    .toArray();
-  res.send(requests);
+  const result = await paginateCollection(
+    requestsCollection,
+    { donationStatus: "pending" },
+    req.query
+  );
+  res.send(result);
 }
 
 /**
@@ -40,25 +43,27 @@ async function getRecentDonationRequests(req, res) {
 
 /**
  * GET /allDonationRequests?email=...
- * Retrieves all donation requests for a requester.
+ * Retrieves all donation requests for a requester (supports optional ?page & ?limit).
  */
 async function getUserDonationRequests(req, res) {
   const { requestsCollection } = getCollections();
   const email = req.query.email;
-  const allUserRequests = await requestsCollection
-    .find({ requesterEmail: email })
-    .toArray();
-  res.send(allUserRequests);
+  const result = await paginateCollection(
+    requestsCollection,
+    { requesterEmail: email },
+    req.query
+  );
+  res.send(result);
 }
 
 /**
  * GET /allDonationRequestsAd
- * Retrieves all donation requests across all users.
+ * Retrieves all donation requests across all users (supports optional ?page & ?limit).
  */
 async function getAllDonationRequests(req, res) {
   const { requestsCollection } = getCollections();
-  const allDonationRequests = await requestsCollection.find().toArray();
-  res.send(allDonationRequests);
+  const result = await paginateCollection(requestsCollection, {}, req.query);
+  res.send(result);
 }
 
 /**
